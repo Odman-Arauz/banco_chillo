@@ -1,0 +1,44 @@
+name: CI Frontend PWA
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'src/apps/pwa-banca/**'
+      - '.github/workflows/ci-frontend-pwa.yml'
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'src/apps/pwa-banca/**'
+      - '.github/workflows/ci-frontend-pwa.yml'
+
+jobs:
+  build-pwa:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout del código
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: 'src/apps/pwa-banca/package.json'
+
+      - name: Instalar dependencias
+        working-directory: src/apps/pwa-banca
+        run: npm ci
+
+      - name: Ejecutar linter
+        working-directory: src/apps/pwa-banca
+        run: npm run lint --if-present
+
+      - name: Pruebas unitarias
+        working-directory: src/apps/pwa-banca
+        run: npm run test -- --passWithNoTests --if-present
+
+      - name: Build Web PWA
+        working-directory: src/apps/pwa-banca
+        run: npm run build --if-present

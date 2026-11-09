@@ -1,0 +1,29 @@
+name: Reporte de Error (Bug)
+description: Reportar un comportamiento inesperado o fallo en Banco Chillo
+title: "fix: [Resumen del problema]"
+labels: ["bug"]
+body:
+  - type: textarea
+    id: bug_description
+    attributes:
+      label: Descripción del Problema
+      description: Explica de forma clara y concisa qué falló.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction_steps
+    attributes:
+      label: Pasos para Reproducir
+      description: Detalla los pasos para reproducir el fallo con datos sintéticos.
+      placeholder: |
+        1. Iniciar sesión como Cajero en la PWA
+        2. Navegar a Ventanilla > Depósito
+        3. Ingresar cuenta ficticia 1234567890
+    validations:
+      required: true
+  - type: textarea
+    id: expected_vs_actual
+    attributes:
+      label: Comportamiento Esperado vs Obtenido
+    validations:
+      required: true

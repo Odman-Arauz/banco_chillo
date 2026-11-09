@@ -1,0 +1,79 @@
+# ==========================================
+# .gitignore - Banco Chillo (Monorepo)
+# ==========================================
+
+# Ambientes y Secretos
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+*.pfx
+*.cer
+*.crt
+id_rsa*
+secrets.json
+
+# .NET / C#
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+*.suo
+*.user
+*.userprefs
+*.dbmdl
+*.jfm
+*.sln.docstates
+.vs/
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+TestResults/
+*.trx
+coverage/
+*.cobertura.xml
+
+# Node / React Native / Expo / PWA
+node_modules/
+.npm
+.yarn/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+.expo/
+.expo-shared/
+web-build/
+dist/
+dist-ssr/
+build/
+*.tsbuildinfo
+
+# Fastlane / Mobile Native
+android/app/build/
+android/.gradle/
+ios/Pods/
+ios/build/
+*.xcworkspace
+*.mode1v3
+*.pbxuser
+
+# Database / Supabase
+.supabase/
+*.sqlite
+*.sqlite3
+*.db
+
+# Sistema Operativo / IDEs
+.DS_Store
+Thumbs.db
+*.swp
+*~
+.idea/
+
+# Docker
+docker-compose.override.yml

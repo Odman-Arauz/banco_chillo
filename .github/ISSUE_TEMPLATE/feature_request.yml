@@ -1,0 +1,42 @@
+name: Historia de Usuario / Característica
+description: Proponer una nueva funcionalidad o historia de usuario para Banco Chillo
+title: "feat: [Título conciso]"
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: Gracias por proponer una mejora para Banco Chillo.
+  - type: textarea
+    id: user_story
+    attributes:
+      label: Historia de Usuario
+      description: "Como [rol], quiero [funcionalidad] para [beneficio esperado]."
+      placeholder: "Como Oficial de Caja, quiero realizar la apertura de mi caja diaria para registrar el fondo inicial de sencillo."
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance_criteria
+    attributes:
+      label: Criterios de Aceptación (Gherkin)
+      description: Escenarios de prueba en formato Dado-Cuando-Entonces.
+      placeholder: |
+        - Escenario 1: Apertura exitosa con fondo válido
+          Dado que el cajero está autenticado y asignado a una ventanilla activa
+          Cuando ingresa el monto inicial de apertura
+          Entonces la caja pasa a estado 'ABIERTA' y se emite el comprobante de apertura.
+    validations:
+      required: true
+  - type: dropdown
+    id: module
+    attributes:
+      label: Módulo Afectado
+      options:
+        - "Cajeros / Ventanilla"
+        - "Auth / IAM"
+        - "Cuentas & Socios"
+        - "Transacciones & Pagos"
+        - "Créditos"
+        - "Frontend PWA (React Native)"
+        - "Infraestructura / Gateway"
+    validations:
+      required: true

@@ -1,0 +1,16 @@
+title = "Gitleaks config - Banco Chillo"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Permitir mocks y ejemplos de documentacion"
+paths = [
+  '''docs/.*''',
+  '''database/seeds/.*''',
+  '''src/.*/tests/.*'''
+]
+regexes = [
+  '''test_[a-zA-Z0-9]+''',
+  '''mock_[a-zA-Z0-9]+'''
+]

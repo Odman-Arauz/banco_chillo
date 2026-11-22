@@ -27,6 +27,9 @@ gitGraph
 4. Commits pequeños y frecuentes (mínimo uno por día de trabajo) con **Conventional Commits en español**.
 5. Todo entra a `develop` por **Pull Request** con CI en verde y **1 aprobación** de un compañero.
 6. `develop` → `main` solo al cierre de semana, por PR del Tech Lead/docente.
+7. **En GitHub solo viven `main` y `develop`.** Tu rama se **borra automáticamente** cuando tu PR se fusiona
+   (workflow `limpiar-ramas.yml`). Tú borras la copia local (paso final del ciclo). Si necesitas corregir algo
+   después del merge, crea una **rama nueva** desde `develop` actualizado; no reutilices la anterior.
 
 ## Ciclo completo paso a paso
 
@@ -66,12 +69,13 @@ gh pr checks
 gh pr view --web
 ```
 
-Después de que te aprueben y se fusione (*Squash and merge*):
+Después de que te aprueben y se fusione (*Squash and merge*), GitHub ya borró la rama remota. Limpia tu copia local:
 
 ```powershell
 git checkout develop
 git pull origin develop
-git branch -d feat/12-esquema-auth-usuarios
+git fetch --prune                              # olvida las ramas remotas que ya no existen
+git branch -D feat/12-esquema-auth-usuarios    # -D porque con "Squash and merge" Git no la reconoce como fusionada
 ```
 
 ## Conventional Commits

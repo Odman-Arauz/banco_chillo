@@ -1,0 +1,34 @@
+name: Limpieza de ramas fusionadas
+
+# Regla del equipo: en el repositorio solo viven main y develop.
+# Cuando un Pull Request se FUSIONA, este workflow borra su rama automáticamente.
+# Si el PR se cierra sin fusionar, la rama se conserva (puede que aún tenga trabajo útil).
+
+on:
+  pull_request:
+    types: [closed]
+
+permissions:
+  contents: write
+
+jobs:
+  borrar-rama:
+    name: Borrar rama fusionada
+    if: >-
+      github.event.pull_request.merged == true &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      github.event.pull_request.head.ref != 'main' &&
+      github.event.pull_request.head.ref != 'develop'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Borrar la rama del PR
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RAMA: ${{ github.event.pull_request.head.ref }}
+        run: |
+          if gh api -X DELETE "repos/${{ github.repository }}/git/refs/heads/${RAMA}" > /dev/null 2>&1; then
+            echo "Rama '${RAMA}' borrada tras fusionar el PR #${{ github.event.pull_request.number }}."
+          else
+            echo "::notice::La rama '${RAMA}' ya no existía (quizá GitHub la borró automáticamente)."
+          fi

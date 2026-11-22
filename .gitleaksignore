@@ -1,0 +1,5 @@
+# Falsos positivos revisados manualmente (formato: commit:archivo:regla:línea).
+# Agregar aquí SOLO hallazgos verificados que no son secretos, con un comentario del motivo.
+
+# Texto de interfaz 'API Gateway:' en XAML interpretado como API key (corregido en el commit siguiente).
+5d6f1adcc753b461e40d7a262311bd9dbf9b3ffd:src/apps/escritorio-cajero/BancoChillo.Escritorio/MainWindow.xaml:generic-api-key:31

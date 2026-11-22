@@ -63,6 +63,7 @@ docker compose --profile apps up -d --build   # + todos los microservicios
 
 - **`main`**: Rama de producción protegida. Solo recibe merges mediante Pull Request aprobado desde `develop` o `hotfix/*`. Push directo **estrictamente prohibido**.
 - **`develop`**: Rama base de integración y desarrollo. Recibe Pull Requests desde ramas de características.
+- **Solo `main` y `develop` son permanentes.** Toda otra rama se borra al fusionar su Pull Request (workflow `.github/workflows/limpiar-ramas.yml`); para cambios posteriores se crea una rama nueva desde `develop`.
 - **Nomenclatura de ramas**:
   - `feat/<issue-id>-<descripcion-corta>` (ej. `feat/10-apertura-caja-cajero`)
   - `fix/<issue-id>-<descripcion-corta>`

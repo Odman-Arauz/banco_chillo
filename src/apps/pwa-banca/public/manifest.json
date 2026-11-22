@@ -1,0 +1,16 @@
+{
+  "name": "Banco Chillo — Banca Web",
+  "short_name": "Banco Chillo",
+  "description": "Banca web de Banco Chillo para socios, cajeros y personal administrativo.",
+  "lang": "es",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "theme_color": "#1e3a8a",
+  "background_color": "#f8fafc",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

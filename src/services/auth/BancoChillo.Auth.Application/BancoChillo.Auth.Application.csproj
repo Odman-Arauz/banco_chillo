@@ -1,5 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
+  <ItemGroup>
+    <ProjectReference Include="..\BancoChillo.Auth.Domain\BancoChillo.Auth.Domain.csproj" />
+    <ProjectReference Include="..\..\..\building-blocks\BancoChillo.BuildingBlocks.Application\BancoChillo.BuildingBlocks.Application.csproj" />
+  </ItemGroup>
+
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>

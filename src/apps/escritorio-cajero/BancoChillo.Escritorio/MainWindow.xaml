@@ -1,0 +1,60 @@
+<Window x:Class="BancoChillo.Escritorio.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="clr-namespace:BancoChillo.Escritorio.VistasModelo"
+        Title="Banco Chillo — Cajero" Height="560" Width="900"
+        WindowStartupLocation="CenterScreen" Background="#F8FAFC">
+
+    <Window.DataContext>
+        <vm:PrincipalVistaModelo />
+    </Window.DataContext>
+
+    <Window.Resources>
+        <Style TargetType="Button">
+            <Setter Property="Background" Value="#1E3A8A" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="Padding" Value="14,6" />
+            <Setter Property="Margin" Value="8,0,0,0" />
+            <Setter Property="BorderThickness" Value="0" />
+        </Style>
+    </Window.Resources>
+
+    <DockPanel Margin="20">
+        <!-- Encabezado -->
+        <StackPanel DockPanel.Dock="Top" Margin="0,0,0,16">
+            <TextBlock Text="Banco Chillo" FontSize="26" FontWeight="Bold" Foreground="#1E3A8A" />
+            <TextBlock Text="Aplicación de escritorio para ventanilla (base del proyecto)" Foreground="#475569" />
+        </StackPanel>
+
+        <!-- Conexión -->
+        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,12">
+            <TextBlock Text="URL del Gateway" VerticalAlignment="Center" Margin="0,0,8,0" />
+            <TextBox Text="{Binding UrlGateway, UpdateSourceTrigger=PropertyChanged}" Width="260" VerticalContentAlignment="Center" />
+            <TextBlock Text="Rol (desarrollo):" VerticalAlignment="Center" Margin="16,0,8,0" />
+            <ComboBox ItemsSource="{Binding Roles}" SelectedItem="{Binding RolSeleccionado}" Width="190" />
+            <Button Content="Conectar" Command="{Binding ConectarCommand}" />
+            <Button Content="Refrescar" Command="{Binding RefrescarCommand}" />
+        </StackPanel>
+
+        <!-- Barra de estado -->
+        <Border DockPanel.Dock="Bottom" Background="#E0E7FF" CornerRadius="6" Padding="10,6" Margin="0,12,0,0">
+            <StackPanel Orientation="Horizontal">
+                <ProgressBar IsIndeterminate="True" Width="80" Height="8" Margin="0,0,10,0"
+                             Visibility="{Binding Ocupado, Converter={StaticResource BoolAVisibilidad}}" />
+                <TextBlock Text="{Binding Mensaje}" Foreground="#1E293B" />
+            </StackPanel>
+        </Border>
+
+        <!-- Agencias (consumidas del microservicio Cajeros a través del Gateway) -->
+        <DataGrid ItemsSource="{Binding Agencias}" AutoGenerateColumns="False" IsReadOnly="True"
+                  HeadersVisibility="Column" GridLinesVisibility="Horizontal" Background="White">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Código" Binding="{Binding Codigo}" Width="90" />
+                <DataGridTextColumn Header="Nombre" Binding="{Binding Nombre}" Width="*" />
+                <DataGridTextColumn Header="Ciudad" Binding="{Binding Ciudad}" Width="140" />
+                <DataGridTextColumn Header="Teléfono" Binding="{Binding Telefono}" Width="120" />
+                <DataGridTextColumn Header="Estado" Binding="{Binding Estado}" Width="90" />
+            </DataGrid.Columns>
+        </DataGrid>
+    </DockPanel>
+</Window>

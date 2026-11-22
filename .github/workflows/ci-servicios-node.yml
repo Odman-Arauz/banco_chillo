@@ -1,0 +1,49 @@
+name: CI Microservicios Node.js
+
+# Lint + pruebas + construcción de imagen Docker del microservicio Node.js/Express (Notificaciones, ADR-0004).
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'src/services/notificaciones/**'
+      - '.github/workflows/ci-servicios-node.yml'
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'src/services/notificaciones/**'
+      - '.github/workflows/ci-servicios-node.yml'
+
+jobs:
+  probar:
+    name: ${{ matrix.servicio }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        servicio: [notificaciones]
+
+    defaults:
+      run:
+        working-directory: src/services/${{ matrix.servicio }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: src/services/${{ matrix.servicio }}/package-lock.json
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Pruebas
+        run: npm test
+
+      - name: Construir imagen Docker (verificación)
+        run: docker build -t banco-chillo/${{ matrix.servicio }}:ci .

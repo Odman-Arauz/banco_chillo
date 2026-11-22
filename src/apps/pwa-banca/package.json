@@ -1,27 +1,39 @@
 {
   "name": "banco-chillo-pwa",
-  "version": "1.0.0",
-  "description": "Banca Web PWA para Banco Chillo (React Native for Web)",
-  "main": "index.js",
+  "version": "0.1.0",
+  "description": "Banca Web PWA para Banco Chillo (React Native for Web / Expo)",
+  "main": "index.ts",
+  "private": true,
   "scripts": {
     "web": "expo start --web",
+    "start": "expo start",
     "android": "expo start --android",
     "ios": "expo start --ios",
+    "build": "expo export --platform web",
     "test": "jest",
-    "lint": "eslint . --ext .js,.jsx,.ts,.tsx"
+    "lint": "expo lint",
+    "typecheck": "tsc --noEmit"
+  },
+  "jest": {
+    "preset": "jest-expo"
   },
   "dependencies": {
-    "expo": "~52.0.0",
-    "expo-status-bar": "~2.0.0",
-    "react": "18.3.1",
-    "react-dom": "18.3.1",
-    "react-native": "0.76.0",
-    "react-native-web": "~0.19.13"
+    "@expo/metro-runtime": "~58.0.17",
+    "expo": "~58.0.26",
+    "expo-status-bar": "~58.0.5",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "react-native": "0.88.1",
+    "react-native-web": "^0.21.4"
   },
   "devDependencies": {
-    "@babel/core": "^7.25.0",
-    "@types/react": "~18.3.12",
-    "typescript": "^5.3.3"
-  },
-  "private": true
+    "@testing-library/react-native": "^14.1.0",
+    "@types/jest": "^30.0.0",
+    "@types/react": "~19.3.0",
+    "eslint": "^9.39.5",
+    "eslint-config-expo": "^58.0.4",
+    "jest": "^30.5.2",
+    "jest-expo": "^58.0.15",
+    "typescript": "~6.0.3"
+  }
 }

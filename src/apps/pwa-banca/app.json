@@ -1,0 +1,20 @@
+{
+  "expo": {
+    "name": "Banco Chillo",
+    "slug": "banco-chillo-pwa",
+    "version": "0.1.0",
+    "orientation": "default",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "web": {
+      "bundler": "metro",
+      "output": "single",
+      "favicon": "./assets/favicon.png",
+      "name": "Banco Chillo — Banca Web",
+      "shortName": "Banco Chillo",
+      "lang": "es",
+      "themeColor": "#1e3a8a",
+      "backgroundColor": "#f8fafc"
+    }
+  }
+}

@@ -1,0 +1,93 @@
+# =====================================================================
+# Render Blueprint — despliegue académico de Banco Chillo (plan gratuito).
+# Render > New > Blueprint > seleccionar este repositorio.
+#
+# - Cada servicio se construye con su Dockerfile.
+# - autoDeploy: false  → el despliegue lo dispara el pipeline cd-despliegue.yml (Deploy Hook)
+#   solo cuando las pruebas pasan y el código llega a main.
+# - Variables con "sync: false" se llenan a mano en el panel de Render (son secretos).
+# - Plan free: el servicio "duerme" tras 15 min sin tráfico; la primera petición tarda ~50 s.
+# Ver docs/guias/10-despliegue-ci-cd.md
+# =====================================================================
+
+envVarGroups:
+  - name: banco-chillo-compartido
+    envVars:
+      - key: Jwt__Secreto           # mismo valor para todos los servicios .NET
+        sync: false
+      - key: JWT_SECRETO            # mismo valor, para los servicios Node.js
+        sync: false
+      - key: ConnectionStrings__BancoChillo   # Supabase (formato Npgsql)
+        sync: false
+      - key: DATABASE_URL                     # Supabase (formato URI, para Node.js)
+        sync: false
+      - key: Cors__Origenes__0
+        value: https://banco-chillo.vercel.app
+      - key: CORS_ORIGENES
+        value: https://banco-chillo.vercel.app
+
+services:
+  - type: web
+    name: banco-chillo-gateway
+    runtime: docker
+    plan: free
+    region: oregon
+    dockerfilePath: ./src/gateway/BancoChillo.Gateway/Dockerfile
+    dockerContext: .
+    autoDeploy: false
+    healthCheckPath: /health
+    envVars:
+      - fromGroup: banco-chillo-compartido
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Demo
+      - key: ReverseProxy__Clusters__auth__Destinations__d1__Address
+        value: https://banco-chillo-auth.onrender.com
+      - key: ReverseProxy__Clusters__cajeros__Destinations__d1__Address
+        value: https://banco-chillo-cajeros.onrender.com
+      - key: ReverseProxy__Clusters__notificaciones__Destinations__d1__Address
+        value: https://banco-chillo-notificaciones.onrender.com
+
+  - type: web
+    name: banco-chillo-auth
+    runtime: docker
+    plan: free
+    region: oregon
+    dockerfilePath: ./src/services/auth/BancoChillo.Auth.Api/Dockerfile
+    dockerContext: .
+    autoDeploy: false
+    healthCheckPath: /health
+    envVars:
+      - fromGroup: banco-chillo-compartido
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Demo
+
+  - type: web
+    name: banco-chillo-cajeros
+    runtime: docker
+    plan: free
+    region: oregon
+    dockerfilePath: ./src/services/cajeros/BancoChillo.Cajeros.Api/Dockerfile
+    dockerContext: .
+    autoDeploy: false
+    healthCheckPath: /health
+    envVars:
+      - fromGroup: banco-chillo-compartido
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Demo
+
+  - type: web
+    name: banco-chillo-notificaciones
+    runtime: docker
+    plan: free
+    region: oregon
+    dockerfilePath: ./src/services/notificaciones/Dockerfile
+    dockerContext: ./src/services/notificaciones
+    autoDeploy: false
+    healthCheckPath: /health
+    envVars:
+      - fromGroup: banco-chillo-compartido
+      - key: NODE_ENV
+        value: production
+
+  # Cuentas, Transacciones, Créditos y Auditoría (.NET) se agregan aquí (copiando un bloque)
+  # cuando cada equipo tenga su primer endpoint funcionando y probado.

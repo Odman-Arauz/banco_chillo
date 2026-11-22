@@ -2,7 +2,8 @@
 // Cliente Base HTTP con Manejo de JWT e Idempotencia
 // ====================================================
 
-const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
+// Local: http://localhost:5000/api/v1 (gateway). Vercel: variable EXPO_PUBLIC_API_URL con la URL del gateway en Render.
+export const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
 
 export async function apiFetch<T>(
   endpoint: string,

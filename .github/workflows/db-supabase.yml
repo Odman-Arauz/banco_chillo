@@ -1,0 +1,47 @@
+name: Base de Datos — Aplicar scripts en Supabase
+
+# Se ejecuta SOLO a mano: Actions > "Base de Datos — Aplicar scripts en Supabase" > Run workflow.
+# Aplica database/schema/** y luego database/seeds/** en orden alfabético.
+# Requisito: los scripts deben ser IDEMPOTENTES (CREATE ... IF NOT EXISTS, ON CONFLICT DO NOTHING),
+# porque se pueden ejecutar varias veces sobre la misma base.
+#
+# Secreto requerido: SUPABASE_DB_URL (cadena "URI" del Session Pooler de Supabase, puerto 5432).
+# Ver docs/guias/09-base-de-datos-supabase.md
+
+on:
+  workflow_dispatch:
+    inputs:
+      incluir_semillas:
+        description: '¿Ejecutar también database/seeds?'
+        type: boolean
+        default: true
+
+jobs:
+  aplicar:
+    runs-on: ubuntu-latest
+    environment: supabase
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Instalar cliente psql
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+
+      - name: Aplicar esquemas
+        env:
+          DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          for archivo in $(find database/schema -name '*.sql' | sort); do
+            echo ">> $archivo"
+            psql "$DB_URL" -v ON_ERROR_STOP=1 -f "$archivo"
+          done
+
+      - name: Aplicar semillas
+        if: ${{ inputs.incluir_semillas }}
+        env:
+          DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          for archivo in $(find database/seeds -name '*.sql' | sort); do
+            echo ">> $archivo"
+            psql "$DB_URL" -v ON_ERROR_STOP=1 -f "$archivo"
+          done

@@ -1,0 +1,76 @@
+name: CD Despliegue Microservicios
+
+# Entrega Continua: cuando algo llega a main (o se ejecuta a mano):
+#   1. Construye la imagen Docker de cada microservicio y la publica en GitHub Container Registry (ghcr.io).
+#   2. Pide a Render que despliegue la nueva versión mediante su "Deploy Hook".
+#
+# Configuración (una sola vez, la hace el responsable de DevOps):
+#   - Settings > Secrets and variables > Actions > New repository secret:
+#       RENDER_HOOK_GATEWAY, RENDER_HOOK_AUTH, RENDER_HOOK_CAJEROS, RENDER_HOOK_NOTIFICACIONES, ...
+#     (cada valor es la URL "Deploy Hook" del servicio en Render > Settings).
+#   - Si un secreto no existe, ese servicio simplemente no se despliega (no falla el pipeline).
+# Ver docs/guias/10-despliegue-ci-cd.md
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/services/**'
+      - 'src/gateway/**'
+      - 'src/building-blocks/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  imagen:
+    name: Imagen ${{ matrix.servicio }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { servicio: gateway, contexto: ., dockerfile: src/gateway/BancoChillo.Gateway/Dockerfile, hook: RENDER_HOOK_GATEWAY }
+          - { servicio: auth, contexto: ., dockerfile: src/services/auth/BancoChillo.Auth.Api/Dockerfile, hook: RENDER_HOOK_AUTH }
+          - { servicio: cuentas, contexto: ., dockerfile: src/services/cuentas/BancoChillo.Cuentas.Api/Dockerfile, hook: RENDER_HOOK_CUENTAS }
+          - { servicio: transacciones, contexto: ., dockerfile: src/services/transacciones/BancoChillo.Transacciones.Api/Dockerfile, hook: RENDER_HOOK_TRANSACCIONES }
+          - { servicio: cajeros, contexto: ., dockerfile: src/services/cajeros/BancoChillo.Cajeros.Api/Dockerfile, hook: RENDER_HOOK_CAJEROS }
+          - { servicio: auditoria, contexto: ., dockerfile: src/services/auditoria/BancoChillo.Auditoria.Api/Dockerfile, hook: RENDER_HOOK_AUDITORIA }
+          - { servicio: creditos, contexto: ., dockerfile: src/services/creditos/BancoChillo.Creditos.Api/Dockerfile, hook: RENDER_HOOK_CREDITOS }
+          - { servicio: notificaciones, contexto: src/services/notificaciones, dockerfile: src/services/notificaciones/Dockerfile, hook: RENDER_HOOK_NOTIFICACIONES }
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Iniciar sesión en ghcr.io
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Nombre de imagen en minúsculas
+        id: nombre
+        run: echo "imagen=ghcr.io/${GITHUB_REPOSITORY,,}/${{ matrix.servicio }}" >> "$GITHUB_OUTPUT"
+
+      - name: Construir y publicar
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ matrix.contexto }}
+          file: ${{ matrix.dockerfile }}
+          push: true
+          tags: |
+            ${{ steps.nombre.outputs.imagen }}:latest
+            ${{ steps.nombre.outputs.imagen }}:${{ github.sha }}
+
+      - name: Desplegar en Render
+        env:
+          HOOK: ${{ secrets[matrix.hook] }}
+        run: |
+          if [ -z "$HOOK" ]; then
+            echo "::notice::Sin secreto ${{ matrix.hook }}; ${{ matrix.servicio }} no se despliega todavía."
+          else
+            curl -fsS -X POST "$HOOK" > /dev/null && echo "Despliegue de ${{ matrix.servicio }} solicitado a Render."
+          fi

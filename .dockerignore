@@ -1,0 +1,13 @@
+# Lo que NO se envía al construir imágenes Docker (más rápido y sin secretos).
+.git
+.github
+.vs
+.vscode
+**/bin
+**/obj
+**/node_modules
+**/dist
+**/TestResults
+**/.env
+docs
+src/apps

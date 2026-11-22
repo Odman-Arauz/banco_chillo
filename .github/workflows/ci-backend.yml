@@ -1,4 +1,7 @@
-name: CI Backend
+name: CI Backend .NET
+
+# Integración Continua: compila la solución y corre TODAS las pruebas xUnit
+# en cada Pull Request hacia develop/main. Si falla, el PR no se puede fusionar.
 
 on:
   push:
@@ -7,6 +10,10 @@ on:
       - 'src/services/**'
       - 'src/building-blocks/**'
       - 'src/gateway/**'
+      - 'src/apps/escritorio-cajero/**'
+      - 'BancoChillo.sln'
+      - 'Directory.Build.props'
+      - 'global.json'
       - '.github/workflows/ci-backend.yml'
   pull_request:
     branches: [main, develop]
@@ -14,26 +21,39 @@ on:
       - 'src/services/**'
       - 'src/building-blocks/**'
       - 'src/gateway/**'
+      - 'src/apps/escritorio-cajero/**'
+      - 'BancoChillo.sln'
+      - 'Directory.Build.props'
+      - 'global.json'
       - '.github/workflows/ci-backend.yml'
 
 jobs:
-  build-and-test:
+  compilar-y-probar:
+    name: Compilar y probar (.NET 10)
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout del código
+      - name: Descargar código
         uses: actions/checkout@v4
 
-      - name: Configurar .NET
+      - name: Instalar .NET (versión de global.json)
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '9.0.x'
+          global-json-file: global.json
 
-      - name: Restaurar dependencias
-        run: dotnet restore
+      - name: Restaurar paquetes NuGet
+        run: dotnet restore BancoChillo.sln
 
-      - name: Compilar solución
-        run: dotnet build --no-restore --configuration Release
+      - name: Compilar
+        run: dotnet build BancoChillo.sln --no-restore --configuration Release
 
-      - name: Ejecutar pruebas unitarias
-        run: dotnet test --no-build --configuration Release --verbosity normal --collect:"XPlat Code Coverage"
+      - name: Pruebas unitarias
+        run: dotnet test BancoChillo.sln --no-build --configuration Release --logger "trx;LogFilePrefix=resultados" --collect:"XPlat Code Coverage"
+
+      - name: Publicar resultados de pruebas
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: resultados-pruebas-dotnet
+          path: '**/TestResults/**'
+          retention-days: 7

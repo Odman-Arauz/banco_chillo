@@ -12,5 +12,7 @@ paths = [
 ]
 regexes = [
   '''test_[a-zA-Z0-9]+''',
-  '''mock_[a-zA-Z0-9]+'''
+  '''mock_[a-zA-Z0-9]+''',
+  '''solo-desarrollo-local-[a-z0-9-]+''',
+  '''solo_desarrollo_local'''
 ]

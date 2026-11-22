@@ -1,0 +1,54 @@
+name: CD App de Escritorio (.exe)
+
+# Genera BancoChillo.Cajero.exe en Windows.
+# - En cada push a develop/main: lo deja como artefacto descargable de la ejecución (7 días).
+# - Al crear un tag "escritorio-v*" (ej. escritorio-v0.1.0): publica un GitHub Release con el .exe.
+#     git tag escritorio-v0.1.0 && git push origin escritorio-v0.1.0
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'src/apps/escritorio-cajero/**'
+      - '.github/workflows/cd-escritorio.yml'
+    tags:
+      - 'escritorio-v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  publicar-exe:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Publicar ejecutable de un solo archivo
+        run: >
+          dotnet publish src/apps/escritorio-cajero/BancoChillo.Escritorio
+          -c Release -r win-x64 --self-contained true
+          -p:PublishSingleFile=true
+          -o publicacion/escritorio
+
+      - name: Subir artefacto
+        uses: actions/upload-artifact@v4
+        with:
+          name: BancoChillo.Cajero-win-x64
+          path: publicacion/escritorio/BancoChillo.Cajero.exe
+          retention-days: 7
+
+      - name: Crear GitHub Release
+        if: startsWith(github.ref, 'refs/tags/escritorio-v')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: >
+          gh release create "${{ github.ref_name }}"
+          publicacion/escritorio/BancoChillo.Cajero.exe
+          --title "App de escritorio ${{ github.ref_name }}"
+          --generate-notes

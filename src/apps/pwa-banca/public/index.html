@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+    <meta name="theme-color" content="#1e3a8a" />
+    <meta name="description" content="Banca web de Banco Chillo para socios, cajeros y personal administrativo." />
+    <title>Banco Chillo</title>
+    <!-- PWA: manifiesto (instalable) -->
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="apple-touch-icon" href="/icon-192.png" />
+    <style>
+      html, body, #root { width: 100%; height: 100%; margin: 0; }
+      body { overflow: hidden; background-color: #f8fafc; }
+      #root { display: flex; }
+    </style>
+  </head>
+  <body>
+    <noscript>Banco Chillo necesita JavaScript para funcionar.</noscript>
+    <div id="root"></div>
+    <script>
+      // PWA: registra el Service Worker (public/sw.js). Solo funciona en https o en localhost.
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function () {
+          navigator.serviceWorker.register('/sw.js').catch(function (e) {
+            console.warn('No se pudo registrar el Service Worker', e);
+          });
+        });
+      }
+    </script>
+  </body>
+</html>

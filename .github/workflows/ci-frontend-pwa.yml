@@ -13,11 +13,16 @@ on:
       - '.github/workflows/ci-frontend-pwa.yml'
 
 jobs:
-  build-pwa:
+  construir-pwa:
+    name: Lint, tipos, pruebas y build web
     runs-on: ubuntu-latest
 
+    defaults:
+      run:
+        working-directory: src/apps/pwa-banca
+
     steps:
-      - name: Checkout del código
+      - name: Descargar código
         uses: actions/checkout@v4
 
       - name: Configurar Node.js
@@ -25,20 +30,26 @@ jobs:
         with:
           node-version: '22'
           cache: 'npm'
-          cache-dependency-path: 'src/apps/pwa-banca/package.json'
+          cache-dependency-path: src/apps/pwa-banca/package-lock.json
 
       - name: Instalar dependencias
-        working-directory: src/apps/pwa-banca
         run: npm ci
 
-      - name: Ejecutar linter
-        working-directory: src/apps/pwa-banca
-        run: npm run lint --if-present
+      - name: Lint
+        run: npm run lint
 
-      - name: Pruebas unitarias
-        working-directory: src/apps/pwa-banca
-        run: npm run test -- --passWithNoTests --if-present
+      - name: Verificar tipos TypeScript
+        run: npm run typecheck
 
-      - name: Build Web PWA
-        working-directory: src/apps/pwa-banca
-        run: npm run build --if-present
+      - name: Pruebas unitarias (Jest)
+        run: npm test -- --ci
+
+      - name: Build web (PWA)
+        run: npm run build
+
+      - name: Guardar build
+        uses: actions/upload-artifact@v4
+        with:
+          name: pwa-web
+          path: src/apps/pwa-banca/dist
+          retention-days: 7

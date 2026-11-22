@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    App de escritorio para cajeros de agencia (WPF, solo Windows).
+    Para generar el .exe de un solo archivo usa el script scripts/publicar-escritorio.ps1
+    o sigue docs/guias/11-escritorio-exe.md
+  -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <!-- Permite compilar (no ejecutar) este proyecto en Linux, ej. en GitHub Actions ubuntu. -->
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <AssemblyName>BancoChillo.Cajero</AssemblyName>
+    <Product>Banco Chillo — Cajero</Product>
+    <Version>0.1.0</Version>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
+  </ItemGroup>
+
+</Project>

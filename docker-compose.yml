@@ -1,22 +1,52 @@
+# =====================================================================
+# Banco Chillo — entorno local
+#
+#   Solo infraestructura (lo normal mientras programas con dotnet run / npm run dev):
+#     docker compose up -d
+#
+#   Todo el sistema en contenedores (para probar como en producción):
+#     docker compose --profile apps up -d --build
+#
+#   Borrar todo, incluida la base de datos (vuelve a correr los scripts SQL):
+#     docker compose --profile apps down -v
+#
+# Las contraseñas de aquí son SOLO para tu computadora. Las reales viven en
+# los "Secrets" de GitHub, Render y Supabase. Ver docs/guias/10-despliegue-ci-cd.md
+# =====================================================================
+
+x-dotnet-env: &dotnet-env
+  ASPNETCORE_ENVIRONMENT: Development
+  ConnectionStrings__BancoChillo: Host=postgres;Port=5432;Database=${POSTGRES_DB:-banco_chillo_dev};Username=${POSTGRES_USER:-banco_admin};Password=${POSTGRES_PASSWORD:-solo_desarrollo_local}
+  Jwt__Secreto: ${JWT_SECRETO:-solo-desarrollo-local-clave-jwt-banco-chillo-2026}
+
+x-node-env: &node-env
+  NODE_ENV: development
+  PUERTO: "8080"
+  DATABASE_URL: postgres://${POSTGRES_USER:-banco_admin}:${POSTGRES_PASSWORD:-solo_desarrollo_local}@postgres:5432/${POSTGRES_DB:-banco_chillo_dev}
+  JWT_SECRETO: ${JWT_SECRETO:-solo-desarrollo-local-clave-jwt-banco-chillo-2026}
+
 services:
+  # ------------------------- Infraestructura -------------------------
   postgres:
     image: postgres:16-alpine
     container_name: banco_chillo_postgres
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-banco_admin}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-banco_secure_dev_2026}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-solo_desarrollo_local}
       POSTGRES_DB: ${POSTGRES_DB:-banco_chillo_dev}
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./database/schema:/docker-entrypoint-initdb.d:ro
+      - ./database/docker-init:/docker-entrypoint-initdb.d:ro
+      - ./database/schema:/banco-chillo/schema:ro
+      - ./database/seeds:/banco-chillo/seeds:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
       interval: 5s
       timeout: 5s
-      retries: 5
+      retries: 10
 
   redis:
     image: redis:7-alpine
@@ -37,8 +67,8 @@ services:
     container_name: banco_chillo_rabbitmq
     restart: unless-stopped
     ports:
-      - "5672:5672"   # AMQP protocol
-      - "15672:15672" # Management Web UI
+      - "5672:5672"   # Protocolo AMQP
+      - "15672:15672" # Consola web: http://localhost:15672 (guest / guest)
     environment:
       RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-guest}
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASS:-guest}
@@ -49,6 +79,72 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+
+  # ------------------------- Microservicios (perfil "apps") -------------------------
+  gateway:
+    profiles: ["apps"]
+    build: { context: ., dockerfile: src/gateway/BancoChillo.Gateway/Dockerfile }
+    container_name: banco_chillo_gateway
+    ports: ["5000:8080"]
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ReverseProxy__Clusters__auth__Destinations__d1__Address: http://auth:8080
+      ReverseProxy__Clusters__cuentas__Destinations__d1__Address: http://cuentas:8080
+      ReverseProxy__Clusters__transacciones__Destinations__d1__Address: http://transacciones:8080
+      ReverseProxy__Clusters__cajeros__Destinations__d1__Address: http://cajeros:8080
+      ReverseProxy__Clusters__creditos__Destinations__d1__Address: http://creditos:8080
+      ReverseProxy__Clusters__auditoria__Destinations__d1__Address: http://auditoria:8080
+      ReverseProxy__Clusters__notificaciones__Destinations__d1__Address: http://notificaciones:8080
+    depends_on: [auth, cajeros, notificaciones]
+
+  auth:
+    profiles: ["apps"]
+    build: { context: ., dockerfile: src/services/auth/BancoChillo.Auth.Api/Dockerfile }
+    ports: ["5001:8080"]
+    environment: *dotnet-env
+    depends_on: { postgres: { condition: service_healthy } }
+
+  cuentas:
+    profiles: ["apps"]
+    build: { context: ., dockerfile: src/services/cuentas/BancoChillo.Cuentas.Api/Dockerfile }
+    ports: ["5003:8080"]
+    environment: *dotnet-env
+    depends_on: { postgres: { condition: service_healthy } }
+
+  transacciones:
+    profiles: ["apps"]
+    build: { context: ., dockerfile: src/services/transacciones/BancoChillo.Transacciones.Api/Dockerfile }
+    ports: ["5004:8080"]
+    environment: *dotnet-env
+    depends_on: { postgres: { condition: service_healthy } }
+
+  cajeros:
+    profiles: ["apps"]
+    build: { context: ., dockerfile: src/services/cajeros/BancoChillo.Cajeros.Api/Dockerfile }
+    ports: ["5002:8080"]
+    environment: *dotnet-env
+    depends_on: { postgres: { condition: service_healthy } }
+
+  creditos:
+    profiles: ["apps"]
+    build: { context: ., dockerfile: src/services/creditos/BancoChillo.Creditos.Api/Dockerfile }
+    ports: ["5005:8080"]
+    environment: *dotnet-env
+    depends_on: { postgres: { condition: service_healthy } }
+
+  auditoria:
+    profiles: ["apps"]
+    build: { context: ., dockerfile: src/services/auditoria/BancoChillo.Auditoria.Api/Dockerfile }
+    ports: ["5006:8080"]
+    environment: *dotnet-env
+    depends_on: { postgres: { condition: service_healthy } }
+
+  notificaciones:
+    profiles: ["apps"]
+    build: { context: src/services/notificaciones }
+    ports: ["5007:8080"]
+    environment: *node-env
+    depends_on: { postgres: { condition: service_healthy } }
 
 volumes:
   postgres_data:

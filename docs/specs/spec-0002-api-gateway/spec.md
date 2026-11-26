@@ -2,8 +2,8 @@
 
 - **ID:** SPEC-0002
 - **Módulo:** Gateway (`src/gateway/BancoChillo.Gateway`)
-- **Estado:** En Revisión
-- **Fecha:** 2026-11-12 (ampliada 2026-11-14)
+- **Estado:** Implementada (Issue #18)
+- **Fecha:** 2026-11-12 (ampliada 2026-11-14, decisiones cerradas 2026-11-25)
 - **Issue:** #2
 - **ADR de referencia:** [ADR-0001 — Arquitectura de Microservicios con Clean Architecture y CQRS](../../adr/ADR-0001-arquitectura-microservicios-clean-cqrs.md)
 - **Documentos relacionados:** [`plan.md`](./plan.md), [`tasks.md`](./tasks.md), [`AGENTS.md`](../../../AGENTS.md), [Guía de desarrollo para juniors](../../procedimientos/guia-desarrollo-juniors.md)
@@ -262,13 +262,28 @@ Característica: API Gateway centralizado
 
 ### 9.1 Tabla de enrutamiento
 
-| Ruta pública (Gateway)       | Ruta YARP                                  | Cluster                 | Destino (según issue #2) |
-|------------------------------|--------------------------------------------|-------------------------|--------------------------|
-| `/api/v1/auth/**`            | `/api/v1/auth/{**catch-all}`               | `auth-service`          | `http://localhost:5001`  |
-| `/api/v1/cajeros/**`         | `/api/v1/cajeros/{**catch-all}`            | `cajeros-service`       | `http://localhost:5002`  |
-| `/api/v1/cuentas/**`         | `/api/v1/cuentas/{**catch-all}`            | `cuentas-service`       | `http://localhost:5003`  |
-| `/api/v1/transacciones/**`   | `/api/v1/transacciones/{**catch-all}`      | `transacciones-service` | `http://localhost:5004`  |
-| `/api/v1/creditos/**`        | `/api/v1/creditos/{**catch-all}`           | `creditos-service`      | `http://localhost:5005`  |
+Actualizada con las decisiones de la sección 14 (7 microservicios, una ruta por servicio).
+
+| Ruta pública (Gateway) | Ruta YARP | Cluster | Destino local | Destino en Docker | Límite |
+|---|---|---|---|---|---|
+| `/api/v1/auth/login` | `/api/v1/auth/login` (`Order: -1`) | `auth` | `http://localhost:5001` | `http://auth:8080` | 10/min por IP + global |
+| `/api/v1/auth/**` | `/api/v1/auth/{**resto}` | `auth` | `http://localhost:5001` | `http://auth:8080` | global |
+| `/api/v1/cajeros/**` | `/api/v1/cajeros/{**resto}` | `cajeros` | `http://localhost:5002` | `http://cajeros:8080` | global |
+| `/api/v1/cuentas/**` | `/api/v1/cuentas/{**resto}` | `cuentas` | `http://localhost:5003` | `http://cuentas:8080` | global |
+| `/api/v1/transacciones/**` | `/api/v1/transacciones/{**resto}` | `transacciones` | `http://localhost:5004` | `http://transacciones:8080` | global |
+| `/api/v1/creditos/**` | `/api/v1/creditos/{**resto}` | `creditos` | `http://localhost:5005` | `http://creditos:8080` | global |
+| `/api/v1/auditoria/**` | `/api/v1/auditoria/{**resto}` | `auditoria` | `http://localhost:5006` | `http://auditoria:8080` | global |
+| `/api/v1/notificaciones/**` | `/api/v1/notificaciones/{**resto}` | `notificaciones` | `http://localhost:5007` | `http://notificaciones:8080` | global |
+
+Límite global: 100 peticiones por minuto por IP en todas las rutas, excepto `/health` y `/health/servicios`.
+
+Endpoints propios del gateway (no se reenvían):
+
+| Endpoint | Respuesta |
+|---|---|
+| `GET /health` | `200` si el gateway está vivo (lo usa Render). |
+| `GET /health/servicios` | Estado de cada microservicio (`Sano`, `Caido`, `Timeout`), máximo 3 s por servicio. `200` si todos están sanos, `503` si alguno falla. |
+| `GET /` | Nombre del gateway y lista de rutas configuradas. |
 
 La ruta se reenvía **sin transformar** (el microservicio recibe la misma ruta `/api/v1/...`).
 
@@ -311,11 +326,13 @@ sequenceDiagram
 
 | Orden | Middleware | Motivo |
 |-------|------------|--------|
-| 1 | `UseHttpsRedirection` | Forzar HTTPS antes de procesar nada. |
-| 2 | Registro de peticiones | Va primero para medir el tiempo total y registrar también las respuestas 429. |
-| 3 | `UseCors("PwaPolicy")` | Antes del rate limiter para que la PWA pueda leer la respuesta 429 (si no, el navegador la bloquea por CORS). |
-| 4 | `UseRateLimiter` | Rechaza el exceso de peticiones antes de llegar a los microservicios. |
-| 5 | `MapReverseProxy` | Reenvía la petición al cluster correspondiente. |
+| 1 | `UseForwardedHeaders` | Obtener la IP real del cliente detrás del proxy de Render antes de aplicar el rate limit. |
+| 2 | `RegistroPeticionesMiddleware` | Medir el tiempo total y registrar también las respuestas 429 y 502. |
+| 3 | `UseCors` | Antes del rate limiter para que la PWA pueda leer la respuesta 429. |
+| 4 | `UseRateLimiter` | Límite global (100/min) y límite de login (10/min) antes de llegar a los microservicios. |
+| 5 | `MapHealthChecks`, `/health/servicios`, `MapReverseProxy` | Endpoints propios y reenvío al cluster. |
+
+No se usa `UseHttpsRedirection`: en local se trabaja con HTTP y en Render el TLS lo termina la plataforma (sección 14).
 
 ### 9.5 Ejemplo de configuración (`appsettings.json`)
 
@@ -423,15 +440,24 @@ Mejoras futuras (fuera del alcance): métricas con OpenTelemetry, trazas distrib
 
 ---
 
-## 14. Decisiones Pendientes / Preguntas para el Tech Lead
+## 14. Decisiones Tomadas (antes "Decisiones Pendientes")
 
-1. **Puertos de los microservicios:** el issue #2 indica `5001`–`5005`, pero los `launchSettings.json` actuales usan otros puertos (Auth `5011`, Cajeros `5134`, Cuentas `5018`, Transacciones `5050`, Créditos `5195`). ¿Se ajustan los `launchSettings.json` a `5001`–`5005` o el Gateway apunta a los puertos actuales?
-2. **Origen del frontend PWA:** ¿cuál es la URL/puerto oficial de la PWA en desarrollo (por ejemplo, el puerto por defecto de Expo Web) y en producción?
-3. **Rate limiting distribuido:** el limitador en memoria funciona por instancia. `AGENTS.md` menciona Redis para rate limiting; ¿se migra a Redis cuando haya más de una instancia del Gateway?
-4. **IP detrás de proxy/balanceador:** si el Gateway se despliega detrás de otro proxy, habrá que configurar `ForwardedHeaders` para obtener la IP real del cliente.
-5. **Límites diferenciados:** ¿se desea un límite más estricto solo para `/api/v1/auth/login` (por ejemplo, 10 intentos por minuto) además del límite global?
+Decisiones cerradas en la planificación de la semana 5 (Issue #18):
 
----
+| # | Pregunta original | Decisión |
+|---|---|---|
+| 1 | Puertos de los microservicios | Auth `5001`, Cajeros `5002`, Cuentas `5003`, Transacciones `5004`, Créditos `5005`, Auditoría `5006`, Notificaciones `5007`. El gateway usa `5000`. En Docker cada servicio escucha en `8080` y se llama por su nombre (`http://auth:8080`). |
+| 2 | Origen del frontend PWA | `http://localhost:8081` en desarrollo (Expo Web) y el dominio de Vercel en producción, configurado en `Cors:Origenes` (en Render: variable `Cors__Origenes__0`). |
+| 3 | Rate limiting distribuido con Redis | **No por ahora.** El límite queda en memoria (una sola instancia en Render). Redis queda como trabajo futuro. |
+| 4 | IP detrás de proxy/balanceador | Se configura `ForwardedHeaders` (`X-Forwarded-For` y `X-Forwarded-Proto`) con `ForwardLimit = 1`, así se toma la IP que agrega el proxy de Render. |
+| 5 | Límite especial para el login | **Sí:** 10 peticiones por minuto por IP solo en `/api/v1/auth/login` (ruta `auth-login` con `Order: -1`, prioridad sobre la ruta general de auth). El límite global de 100/min se mantiene. La petición 11 devuelve `429` con cabecera `Retry-After: 60`. |
+| 6 | Rutas | Una por servicio con el patrón `/api/v1/<servicio>/{**resto}` (7 servicios, ver tabla 9.1). Auditoría sí se expone para las consultas del rol auditor. |
+| 7 | TLS / HTTPS | HTTP en local. En Render el TLS lo termina la plataforma, por eso RF-09 (`UseHttpsRedirection`) no se implementa en el gateway. |
+| 8 | Timeouts | `HttpRequest:ActivityTimeout` de 30 s por cluster. Servicio caído = `502` inmediato; servicio lento = `504` a los 30 s. Ningún caso bloquea las rutas de los demás servicios. |
+| 9 | Health checks | Activos de YARP cada 30 s contra `/health` de cada cluster (política `ConsecutiveFailures`, timeout 5 s). Con `AvailableDestinationsPolicy: HealthyOrPanic` el gateway sigue intentando el destino aunque esté marcado como caído, para responder `502` y no `503`. |
+| 10 | Registro de peticiones | `RegistroPeticionesMiddleware`: método, ruta (sin query string, con secuencias de 6+ dígitos enmascaradas como `***`), código y milisegundos. Nivel `Warning` para 5xx. El log de YARP baja a `Warning` para que no escriba URLs con query string. |
+
+**Fuera de alcance (confirmado):** validación de JWT en el gateway y reintentos de Polly para `POST`.
 
 ## 15. ADR
 
@@ -442,15 +468,15 @@ YARP y Polly ya forman parte del stack aprobado en `AGENTS.md` y siguen la arqui
 ## 16. Definición de Terminado (DoD)
 
 - [ ] Especificación revisada y aprobada por el Tech Lead.
-- [ ] Preguntas de la sección 14 resueltas.
-- [ ] Las 5 rutas reenvían correctamente a su microservicio.
+- [x] Preguntas de la sección 14 resueltas.
+- [ ] Las 7 rutas reenvían correctamente a su microservicio.
 - [ ] Rate limiting devuelve `429` a partir de la petición 101.
 - [ ] CORS solo permite el origen de la PWA.
-- [ ] HTTPS habilitado y redirección activa.
+- [x] HTTPS: terminado por Render (decisión 7 de la sección 14).
 - [ ] Logs con método, ruta, estado y duración, sin datos sensibles.
 - [ ] Pruebas de integración en verde (`dotnet test`).
 - [ ] `dotnet build` y `dotnet format` sin errores.
-- [ ] Pull Request aprobado hacia `develop` con `Closes #2`.
+- [ ] Pull Request aprobado hacia `develop` con `Closes #18`.
 
 ---
 

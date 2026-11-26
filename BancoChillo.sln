@@ -111,6 +111,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{234B607F
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BancoChillo.Auditoria.Tests", "src\services\auditoria\tests\BancoChillo.Auditoria.Tests\BancoChillo.Auditoria.Tests.csproj", "{705FC5F8-0D79-408C-A807-47BD6F79774F}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{7ECB09D0-209D-4517-89D9-0E9F7DD1C8BB}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BancoChillo.Gateway.Tests", "src\gateway\tests\BancoChillo.Gateway.Tests\BancoChillo.Gateway.Tests.csproj", "{155E25E0-5CED-47CE-B10F-0D0680333A81}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -553,11 +557,25 @@ Global
 		{705FC5F8-0D79-408C-A807-47BD6F79774F}.Release|x64.Build.0 = Release|Any CPU
 		{705FC5F8-0D79-408C-A807-47BD6F79774F}.Release|x86.ActiveCfg = Release|Any CPU
 		{705FC5F8-0D79-408C-A807-47BD6F79774F}.Release|x86.Build.0 = Release|Any CPU
+		{155E25E0-5CED-47CE-B10F-0D0680333A81}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{155E25E0-5CED-47CE-B10F-0D0680333A81}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{155E25E0-5CED-47CE-B10F-0D0680333A81}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{155E25E0-5CED-47CE-B10F-0D0680333A81}.Debug|x64.Build.0 = Debug|Any CPU
+		{155E25E0-5CED-47CE-B10F-0D0680333A81}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{155E25E0-5CED-47CE-B10F-0D0680333A81}.Debug|x86.Build.0 = Debug|Any CPU
+		{155E25E0-5CED-47CE-B10F-0D0680333A81}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{155E25E0-5CED-47CE-B10F-0D0680333A81}.Release|Any CPU.Build.0 = Release|Any CPU
+		{155E25E0-5CED-47CE-B10F-0D0680333A81}.Release|x64.ActiveCfg = Release|Any CPU
+		{155E25E0-5CED-47CE-B10F-0D0680333A81}.Release|x64.Build.0 = Release|Any CPU
+		{155E25E0-5CED-47CE-B10F-0D0680333A81}.Release|x86.ActiveCfg = Release|Any CPU
+		{155E25E0-5CED-47CE-B10F-0D0680333A81}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
+		{7ECB09D0-209D-4517-89D9-0E9F7DD1C8BB} = {6306A8FB-679E-111F-6585-8F70E0EE6013}
+		{155E25E0-5CED-47CE-B10F-0D0680333A81} = {7ECB09D0-209D-4517-89D9-0E9F7DD1C8BB}
 		{C13E73B6-616D-3195-CD22-1E55A7D1F969} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 		{9946C39D-E32B-4C8F-A7D9-3CDDD50E4D6A} = {C13E73B6-616D-3195-CD22-1E55A7D1F969}
 		{BB219361-2812-410F-BB6B-D7A79F765188} = {C13E73B6-616D-3195-CD22-1E55A7D1F969}

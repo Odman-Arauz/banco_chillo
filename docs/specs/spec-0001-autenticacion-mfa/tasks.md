@@ -31,8 +31,8 @@
   - Generar hash BCrypt de la contraseña `Demo#2026`.
   - Asociar roles en `auth_bc.usuario_roles` mediante subconsultas idempotentes.
 
-- [ ] **T6: Validación y Pruebas Locales (Docker + .NET)**
-  - Reinicializar PostgreSQL en Docker con volumen limpio.
+- [x] **T6: Validación y Pruebas Locales (PostgreSQL 16 + .NET)**
+  - Inicializar PostgreSQL 16 local y verificar idempotencia en doble ejecución.
   - Ejecutar prueba de fallo en `DELETE FROM auth_bc.intentos_acceso;`.
   - Ejecutar `dotnet build` y `dotnet test`.
 

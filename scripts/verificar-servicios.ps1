@@ -43,22 +43,17 @@ foreach ($nombre in $servicios.Keys) {
     }
 }
 
-# Resumen del gateway: así se ve cómo ve él a cada microservicio (misma red de Docker).
+# Resumen del gateway: así ve él a cada microservicio (misma red de Docker).
+# Formato: { "gateway": "Healthy", "servicios": { "auth": "Healthy", "cajeros": "Unhealthy", ... } }
 Write-Host "`n=== Vista del gateway (/health/servicios) ===" -ForegroundColor Cyan
 try {
     $reporte = Invoke-RestMethod -Uri "http://${Servidor}:5000/health/servicios" -TimeoutSec 10 -ErrorAction Stop
-} catch {
-    # Con algún servicio caído el gateway responde 503, pero el cuerpo trae el detalle.
-    $reporte = $null
-    if ($_.ErrorDetails.Message) { $reporte = $_.ErrorDetails.Message | ConvertFrom-Json }
-}
-if ($reporte) {
-    foreach ($s in $reporte.servicios) {
-        $color = if ($s.estado -eq 'Sano') { 'Green' } else { 'Red' }
-        Write-Host ("        {0,-15} {1,-10} {2} ms" -f $s.nombre, $s.estado, $s.milisegundos) -ForegroundColor $color
+    Write-Host ("        {0,-15} {1}" -f 'gateway', $reporte.gateway) -ForegroundColor Green
+    foreach ($servicio in $reporte.servicios.PSObject.Properties) {
+        $color = if ($servicio.Value -eq 'Healthy') { 'Green' } else { 'Red' }
+        Write-Host ("        {0,-15} {1}" -f $servicio.Name, $servicio.Value) -ForegroundColor $color
     }
-    Write-Host "        Estado general: $($reporte.estado)"
-} else {
+} catch {
     Write-Host '        El gateway no respondió /health/servicios.' -ForegroundColor Yellow
 }
 

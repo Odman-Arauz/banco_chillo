@@ -1,6 +1,6 @@
 {
   "info": {
-    "_postman_id": "9d133cd3-ef72-46fb-ae6c-5efeb9076d64",
+    "_postman_id": "acbb0d4d-beb1-45ab-97d9-9a47e5dba0be",
     "name": "Banco Chillo — API (vía Gateway)",
     "description": "Colección del grupo. Todas las peticiones pasan por el API Gateway: {{baseUrl}} = <gateway>/api/v1 y {{gatewayUrl}} = <gateway> (salud). Ver docs/postman/README.md.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
@@ -132,11 +132,13 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test(\"200 OK (todos los servicios sanos)\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"200 OK\", () => pm.response.to.have.status(200));",
                   "const cuerpo = pm.response.json();",
-                  "pm.test(\"Reporta los 7 microservicios\", () => pm.expect(cuerpo.servicios).to.have.lengthOf(7));",
-                  "pm.test(\"Estado general Sano\", () => pm.expect(cuerpo.estado).to.eql(\"Sano\"));",
-                  "cuerpo.servicios.forEach(s => console.log(`${s.nombre}: ${s.estado} (${s.milisegundos} ms)`));"
+                  "pm.test(\"El gateway está Healthy\", () => pm.expect(cuerpo.gateway).to.eql(\"Healthy\"));",
+                  "pm.test(\"Reporta los 7 microservicios\", () => pm.expect(Object.keys(cuerpo.servicios)).to.have.lengthOf(7));",
+                  "pm.test(\"Los 7 microservicios están Healthy\", () => {",
+                  "    Object.entries(cuerpo.servicios).forEach(([nombre, estado]) => pm.expect(estado, nombre).to.eql(\"Healthy\"));",
+                  "});"
                 ]
               }
             }
@@ -277,13 +279,11 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test(\"El gateway responde el health agregado\", () => {",
-                  "    pm.expect(pm.response.code).to.be.oneOf([200, 503]);",
-                  "});",
-                  "pm.test(\"Auth está Sano\", () => {",
-                  "    const servicio = pm.response.json().servicios.find(s => s.nombre === \"auth\");",
-                  "    pm.expect(servicio, \"el cluster auth no está en el gateway\").to.exist;",
-                  "    pm.expect(servicio.estado).to.eql(\"Sano\");",
+                  "pm.test(\"200 OK\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Auth está Healthy\", () => {",
+                  "    const servicios = pm.response.json().servicios;",
+                  "    pm.expect(servicios, \"el cluster auth no está en el gateway\").to.have.property(\"auth\");",
+                  "    pm.expect(servicios[\"auth\"]).to.eql(\"Healthy\");",
                   "});"
                 ]
               }
@@ -567,13 +567,11 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test(\"El gateway responde el health agregado\", () => {",
-                  "    pm.expect(pm.response.code).to.be.oneOf([200, 503]);",
-                  "});",
-                  "pm.test(\"Cuentas está Sano\", () => {",
-                  "    const servicio = pm.response.json().servicios.find(s => s.nombre === \"cuentas\");",
-                  "    pm.expect(servicio, \"el cluster cuentas no está en el gateway\").to.exist;",
-                  "    pm.expect(servicio.estado).to.eql(\"Sano\");",
+                  "pm.test(\"200 OK\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Cuentas está Healthy\", () => {",
+                  "    const servicios = pm.response.json().servicios;",
+                  "    pm.expect(servicios, \"el cluster cuentas no está en el gateway\").to.have.property(\"cuentas\");",
+                  "    pm.expect(servicios[\"cuentas\"]).to.eql(\"Healthy\");",
                   "});"
                 ]
               }
@@ -611,13 +609,11 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test(\"El gateway responde el health agregado\", () => {",
-                  "    pm.expect(pm.response.code).to.be.oneOf([200, 503]);",
-                  "});",
-                  "pm.test(\"Transacciones está Sano\", () => {",
-                  "    const servicio = pm.response.json().servicios.find(s => s.nombre === \"transacciones\");",
-                  "    pm.expect(servicio, \"el cluster transacciones no está en el gateway\").to.exist;",
-                  "    pm.expect(servicio.estado).to.eql(\"Sano\");",
+                  "pm.test(\"200 OK\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Transacciones está Healthy\", () => {",
+                  "    const servicios = pm.response.json().servicios;",
+                  "    pm.expect(servicios, \"el cluster transacciones no está en el gateway\").to.have.property(\"transacciones\");",
+                  "    pm.expect(servicios[\"transacciones\"]).to.eql(\"Healthy\");",
                   "});"
                 ]
               }
@@ -655,13 +651,11 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test(\"El gateway responde el health agregado\", () => {",
-                  "    pm.expect(pm.response.code).to.be.oneOf([200, 503]);",
-                  "});",
-                  "pm.test(\"Créditos está Sano\", () => {",
-                  "    const servicio = pm.response.json().servicios.find(s => s.nombre === \"creditos\");",
-                  "    pm.expect(servicio, \"el cluster creditos no está en el gateway\").to.exist;",
-                  "    pm.expect(servicio.estado).to.eql(\"Sano\");",
+                  "pm.test(\"200 OK\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Créditos está Healthy\", () => {",
+                  "    const servicios = pm.response.json().servicios;",
+                  "    pm.expect(servicios, \"el cluster creditos no está en el gateway\").to.have.property(\"creditos\");",
+                  "    pm.expect(servicios[\"creditos\"]).to.eql(\"Healthy\");",
                   "});"
                 ]
               }
@@ -699,13 +693,11 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test(\"El gateway responde el health agregado\", () => {",
-                  "    pm.expect(pm.response.code).to.be.oneOf([200, 503]);",
-                  "});",
-                  "pm.test(\"Auditoría está Sano\", () => {",
-                  "    const servicio = pm.response.json().servicios.find(s => s.nombre === \"auditoria\");",
-                  "    pm.expect(servicio, \"el cluster auditoria no está en el gateway\").to.exist;",
-                  "    pm.expect(servicio.estado).to.eql(\"Sano\");",
+                  "pm.test(\"200 OK\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Auditoría está Healthy\", () => {",
+                  "    const servicios = pm.response.json().servicios;",
+                  "    pm.expect(servicios, \"el cluster auditoria no está en el gateway\").to.have.property(\"auditoria\");",
+                  "    pm.expect(servicios[\"auditoria\"]).to.eql(\"Healthy\");",
                   "});"
                 ]
               }
@@ -933,13 +925,11 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test(\"El gateway responde el health agregado\", () => {",
-                  "    pm.expect(pm.response.code).to.be.oneOf([200, 503]);",
-                  "});",
-                  "pm.test(\"Notificaciones está Sano\", () => {",
-                  "    const servicio = pm.response.json().servicios.find(s => s.nombre === \"notificaciones\");",
-                  "    pm.expect(servicio, \"el cluster notificaciones no está en el gateway\").to.exist;",
-                  "    pm.expect(servicio.estado).to.eql(\"Sano\");",
+                  "pm.test(\"200 OK\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Notificaciones está Healthy\", () => {",
+                  "    const servicios = pm.response.json().servicios;",
+                  "    pm.expect(servicios, \"el cluster notificaciones no está en el gateway\").to.have.property(\"notificaciones\");",
+                  "    pm.expect(servicios[\"notificaciones\"]).to.eql(\"Healthy\");",
                   "});"
                 ]
               }

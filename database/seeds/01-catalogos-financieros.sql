@@ -8,7 +8,8 @@ INSERT INTO auth_bc.roles (codigo, nombre, descripcion) VALUES
 ('ROLE_SUPERVISOR_CAJA', 'Supervisor de Ventanilla', 'Autorización de retiros altos y visado de arqueos'),
 ('ROLE_CAJERO', 'Cajero de Ventanilla', 'Operación diaria de caja, depósitos y retiros'),
 ('ROLE_OFICIAL_CREDITO', 'Oficial de Crédito', 'Evaluación y aprobación de préstamos'),
-('ROLE_SOCIO', 'Socio / Cliente', 'Acceso a banca personal web y móvil')
+('ROLE_SOCIO', 'Socio / Cliente', 'Acceso a banca personal web y móvil'),
+('ROLE_AUDITOR', 'Auditor de Cumplimiento', 'Consulta y verificación de bitácoras inmutables de auditoría')
 ON CONFLICT (codigo) DO NOTHING;
 
 INSERT INTO cajeros_bc.agencias (codigo, nombre, direccion, ciudad) VALUES

@@ -81,4 +81,4 @@ $$ LANGUAGE plpgsql;
 DROP TRIGGER IF EXISTS trg_intentos_acceso_inmutables ON auth_bc.intentos_acceso;
 CREATE TRIGGER trg_intentos_acceso_inmutables
     BEFORE UPDATE OR DELETE ON auth_bc.intentos_acceso
-    FOR EACH ROW EXECUTE FUNCTION auth_bc.impedir_modificacion();
+    FOR EACH STATEMENT EXECUTE FUNCTION auth_bc.impedir_modificacion();

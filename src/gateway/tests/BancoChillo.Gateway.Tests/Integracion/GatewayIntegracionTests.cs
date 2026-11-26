@@ -81,7 +81,7 @@ public sealed class GatewayIntegracionTests
     }
 
     [Fact]
-    public async Task Health_agregado_con_servicios_caidos_devuelve_503_y_el_detalle()
+    public async Task Health_agregado_responde_200_con_gateway_healthy_y_servicios_caidos_unhealthy()
     {
         await using var gateway = CrearGateway();
         var cliente = gateway.CreateClient();
@@ -89,7 +89,9 @@ public sealed class GatewayIntegracionTests
         var respuesta = await cliente.GetAsync("/health/servicios");
         var cuerpo = await respuesta.Content.ReadAsStringAsync();
 
-        respuesta.StatusCode.Should().Be(HttpStatusCode.ServiceUnavailable);
-        cuerpo.Should().Contain("Degradado").And.Contain("auth").And.Contain("notificaciones");
+        respuesta.StatusCode.Should().Be(HttpStatusCode.OK);
+        cuerpo.Should().Contain("\"gateway\":\"Healthy\"")
+            .And.Contain("\"auth\":\"Unhealthy\"")
+            .And.Contain("\"notificaciones\":\"Unhealthy\"");
     }
 }

@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Net;
+using System.Text.Json;
 using BancoChillo.Gateway.Salud;
 using FluentAssertions;
 using Microsoft.Extensions.Configuration;
@@ -10,6 +11,9 @@ namespace BancoChillo.Gateway.Tests.Salud;
 // Los microservicios se simulan con un HttpMessageHandler falso: no se abre ninguna conexión real.
 public sealed class VerificadorSaludServiciosTests
 {
+    private const string Healthy = VerificadorSaludServicios.Healthy;
+    private const string Unhealthy = VerificadorSaludServicios.Unhealthy;
+
     private static readonly DestinoServicio[] Destinos =
     [
         new("auth", "http://auth.prueba"),
@@ -23,20 +27,19 @@ public sealed class VerificadorSaludServiciosTests
         new(new HttpClient(new ManejadorFalso(responder)), timeout ?? TimeSpan.FromSeconds(3));
 
     [Fact]
-    public async Task Todos_los_servicios_sanos_devuelve_estado_sano()
+    public async Task Todos_los_servicios_sanos_devuelve_todo_healthy()
     {
         var verificador = CrearVerificador((_, _) => Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)));
 
         var reporte = await verificador.VerificarAsync(Destinos, CancellationToken.None);
 
-        reporte.Estado.Should().Be(VerificadorSaludServicios.Sano);
+        reporte.Gateway.Should().Be(Healthy);
         reporte.TodoSano.Should().BeTrue();
-        reporte.Servicios.Should().HaveCount(3)
-            .And.OnlyContain(s => s.Estado == VerificadorSaludServicios.Sano);
+        reporte.Servicios.Should().HaveCount(3).And.OnlyContain(s => s.Value == Healthy);
     }
 
     [Fact]
-    public async Task Un_servicio_caido_marca_degradado_y_los_demas_siguen_sanos()
+    public async Task Un_servicio_caido_se_marca_unhealthy_y_los_demas_siguen_healthy()
     {
         var verificador = CrearVerificador((peticion, _) =>
             peticion.RequestUri!.Host == "cuentas.prueba"
@@ -45,26 +48,26 @@ public sealed class VerificadorSaludServiciosTests
 
         var reporte = await verificador.VerificarAsync(Destinos, CancellationToken.None);
 
-        reporte.Estado.Should().Be(VerificadorSaludServicios.Degradado);
+        reporte.Gateway.Should().Be(Healthy);
         reporte.TodoSano.Should().BeFalse();
-        reporte.Servicios.Single(s => s.Nombre == "cuentas").Estado.Should().Be(VerificadorSaludServicios.Caido);
-        reporte.Servicios.Where(s => s.Nombre != "cuentas")
-            .Should().OnlyContain(s => s.Estado == VerificadorSaludServicios.Sano);
+        reporte.Servicios["cuentas"].Should().Be(Unhealthy);
+        reporte.Servicios["auth"].Should().Be(Healthy);
+        reporte.Servicios["cajeros"].Should().Be(Healthy);
     }
 
     [Fact]
-    public async Task Servicio_que_responde_error_500_se_marca_caido()
+    public async Task Servicio_que_responde_error_503_se_marca_unhealthy()
     {
         var verificador = CrearVerificador((peticion, _) => Task.FromResult(new HttpResponseMessage(
             peticion.RequestUri!.Host == "auth.prueba" ? HttpStatusCode.ServiceUnavailable : HttpStatusCode.OK)));
 
         var reporte = await verificador.VerificarAsync(Destinos, CancellationToken.None);
 
-        reporte.Servicios.Single(s => s.Nombre == "auth").Estado.Should().Be(VerificadorSaludServicios.Caido);
+        reporte.Servicios["auth"].Should().Be(Unhealthy);
     }
 
     [Fact]
-    public async Task Servicio_lento_se_marca_timeout_sin_bloquear_la_respuesta()
+    public async Task Servicio_lento_se_marca_unhealthy_por_timeout_sin_bloquear_la_respuesta()
     {
         var verificador = CrearVerificador(
             async (peticion, ct) =>
@@ -82,9 +85,8 @@ public sealed class VerificadorSaludServiciosTests
         var reporte = await verificador.VerificarAsync(Destinos, CancellationToken.None);
 
         cronometro.Elapsed.Should().BeLessThan(TimeSpan.FromSeconds(3));
-        reporte.Estado.Should().Be(VerificadorSaludServicios.Degradado);
-        reporte.Servicios.Single(s => s.Nombre == "cajeros").Estado.Should().Be(VerificadorSaludServicios.Timeout);
-        reporte.Servicios.Single(s => s.Nombre == "auth").Estado.Should().Be(VerificadorSaludServicios.Sano);
+        reporte.Servicios["cajeros"].Should().Be(Unhealthy);
+        reporte.Servicios["auth"].Should().Be(Healthy);
     }
 
     [Fact]
@@ -104,6 +106,18 @@ public sealed class VerificadorSaludServiciosTests
         await verificador.VerificarAsync([new DestinoServicio("auth", "http://auth.prueba/")], CancellationToken.None);
 
         urlsConsultadas.Should().ContainSingle().Which.Should().Be("http://auth.prueba/health");
+    }
+
+    [Fact]
+    public async Task El_json_tiene_el_formato_acordado_para_la_pwa()
+    {
+        var verificador = CrearVerificador((peticion, _) => Task.FromResult(new HttpResponseMessage(
+            peticion.RequestUri!.Host == "cajeros.prueba" ? HttpStatusCode.ServiceUnavailable : HttpStatusCode.OK)));
+        var reporte = await verificador.VerificarAsync(Destinos.Take(2), CancellationToken.None);
+
+        var json = JsonSerializer.Serialize(reporte, new JsonSerializerOptions(JsonSerializerDefaults.Web));
+
+        json.Should().Be("""{"gateway":"Healthy","servicios":{"auth":"Healthy","cajeros":"Unhealthy"}}""");
     }
 
     [Fact]

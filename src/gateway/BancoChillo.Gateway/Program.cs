@@ -1,5 +1,5 @@
 using System.Threading.RateLimiting;
-using BancoChillo.Gateway.Middleware;
+using BancoChillo.Gateway.Middlewares;
 using BancoChillo.Gateway.Salud;
 using Microsoft.AspNetCore.HttpOverrides;
 
@@ -37,7 +37,9 @@ builder.Services.AddCors(o => o.AddDefaultPolicy(p => p
 
 // ---------- Rate limiting ----------
 // Global: 100 peticiones por minuto por IP (todas las rutas).
-// Login:  10 peticiones por minuto por IP, solo para la ruta "auth-login" (RateLimiterPolicy en appsettings.json).
+// Login:  10 peticiones por minuto por IP, solo para POST /api/v1/auth/login
+//         (ruta "auth-login" con "RateLimiterPolicy": "login" y "Order": -1 en appsettings.json;
+//          en YARP un Order menor = mayor prioridad, así gana sobre la ruta general de auth).
 // La petición de login cuenta para los dos límites: primero se revisa el global y luego el de login.
 const string PoliticaLogin = "login";
 
@@ -82,6 +84,8 @@ app.UseRateLimiter();
 app.MapHealthChecks("/health");
 
 // Salud agregada: consulta /health de cada microservicio (3 s máximo por servicio).
+// Respuesta: { "gateway": "Healthy", "servicios": { "auth": "Healthy", "cajeros": "Unhealthy", ... } }
+// Siempre 200: el gateway está vivo; la PWA revisa el estado de cada servicio en el cuerpo.
 app.MapGet("/health/servicios", async (
     IHttpClientFactory fabrica,
     IConfiguration configuracion,
@@ -94,9 +98,7 @@ app.MapGet("/health/servicios", async (
     var reporte = await verificador.VerificarAsync(
         VerificadorSaludServicios.LeerDestinos(configuracion), ct);
 
-    return Results.Json(
-        reporte,
-        statusCode: reporte.TodoSano ? StatusCodes.Status200OK : StatusCodes.Status503ServiceUnavailable);
+    return Results.Ok(reporte);
 });
 
 app.MapGet("/", () => Results.Ok(new

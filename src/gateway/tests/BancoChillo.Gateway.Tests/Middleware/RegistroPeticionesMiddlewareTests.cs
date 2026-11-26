@@ -1,4 +1,4 @@
-using BancoChillo.Gateway.Middleware;
+using BancoChillo.Gateway.Middlewares;
 using FluentAssertions;
 
 namespace BancoChillo.Gateway.Tests.Middleware;
